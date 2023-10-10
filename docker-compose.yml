@@ -4,7 +4,7 @@ services:
                 image: flask_movie_database_v1
                 build: .
                 ports:
-                        - "8086:8086"
+                        - "8765:8765"
                 volumes:
                         - ./volumes:/volumes
                         - ./instance:/instance
