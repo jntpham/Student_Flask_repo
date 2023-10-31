@@ -1,33 +1,27 @@
 import requests
 
-def search_songs_by_artist_genre(artist, genre):
-    url = "https://shazam-api6.p.rapidapi.com/songs/list-artist-top-tracks"
+def fetch_songs_by_artist_genre(artist, genre):
+    url = "https://shazam.p.rapidapi.com/charts/list"
 
-    querystring = {"id":"40008598","locale":"en-US"}
-
+    # Set your headers and parameters as required
     headers = {
-        "X-RapidAPI-Key": "50ed2e0992msh34f550a1d72fefcp1ecc97jsn139df4f8c488",
-        "X-RapidAPI-Host": "shazam-api6.p.rapidapi.com"
+        "Authorization": "50ed2e0992msh34f550a1d72fefcp1ecc97jsn139df4f8c488"
+    }
+    params = {
+        "artist": artist,
+        "genre": genre,
     }
 
-    response = requests.get(url, headers=headers, params=querystring)
-    
+    response = requests.get(url, headers=headers, params=params)
+
     if response.status_code == 200:
         data = response.json()
-        songs = data['tracks']['hits']
 
-        songs_list = []
+        # Extract and process the song data here
+        songs = data.get("songs", [])
 
-        for song in songs:
-            song_title = song['track']['title']
-            song_length = song['track']['duration']
-
-            songs_list.append({
-                'title': song_title,
-                'length': song_length
-            })
-
-        return songs_list
+        # Return the list of songs
+        return songs
     else:
         print('Failed to fetch songs. Status code:', response.status_code)
         return None
@@ -36,7 +30,7 @@ def search_songs_by_artist_genre(artist, genre):
 artist_name = input("Enter the artist's name: ")
 genre = input("Enter the genre: ")
 
-songs = search_songs_by_artist_genre(artist_name, genre)
+songs = fetch_songs_by_artist_genre(artist_name, genre)
 
 if songs:
     print(f"Songs by {artist_name} in the {genre} genre:")
