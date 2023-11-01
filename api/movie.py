@@ -1,51 +1,82 @@
-from flask import Flask, request, jsonify
-import sqlite3
+import requests
 
-app = Flask(__name)
-
-# Initialize the SQLite database
-conn = sqlite3.connect('movies.db')
-cursor = conn.cursor()
-
-# Create the movies table if it doesn't exist
-cursor.execute('''
-    CREATE TABLE IF NOT EXISTS movies (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT
-    )
-''')
-conn.commit()
-
+# Replace your existing '/api/movies/filter' route code
 @app.route('/api/movies/filter', methods=['POST'])
 def filter_movies():
-    # Implement your movie filtering logic here
-    # Return a list of filtered movies in JSON format
-    filtered_movies = [...]  # Replace with your filtered movie data
-    return jsonify(filtered_movies)
-
-@app.route('/api/movies/favorite', methods=['POST'])
-def favorite_movie():
     data = request.get_json()
-    title = data.get('title')
+    lead_actor = data.get('leadActor')
+    genre = data.get('genre')
 
-    # Store the favorited movie in the database
-    cursor.execute('INSERT INTO movies (title) VALUES (?)', (title,))
-    conn.commit()
+    # Construct the API URL with the provided lead actor and genre
+    api_url = f'https://api.themoviedb.org/3/search/person?api_key={api_key}&query={lead_actor}'
 
-    return jsonify({'message': 'Movie favorited successfully'})
+    # Make a request to the API to get the actor's ID
+    actor_response = requests.get(api_url)
+    actor_data = actor_response.json()
 
-@app.route('/api/movies/favorites', methods=['GET'])
-def get_favorite_movies():
-    # Retrieve the list of favorited movies from the database
-    cursor.execute('SELECT title FROM movies')
-    favorites = [row[0] for row in cursor.fetchall()]
-    return jsonify(favorites)
+    # Check if the API request was successful and if there are results
+    if 'results' in actor_data and actor_data['results']:
+        actor_id = actor_data['results'][0]['id']
 
+        # Construct the API URL to fetch the actor's movie credits
+        movie_credits_url = f'https://api.themoviedb.org/3/person/{actor_id}/movie_credits?api_key={api_key}'
+
+        # Make a request to get the actor's movie credits
+        movie_credits_response = requests.get(movie_credits_url)
+        movie_data = movie_credits_response.json()
+
+        # Extract and format the movie data as needed
+        filtered_movies = []
+        for movie in movie_data.get('cast', []):
+            if not genre or genre == 'any' or genre in [str(g['id']) for g in movie.get('genre_ids', [])]:
+                movie_info = {
+                    'title': movie.get('title'),
+                    'release_date': movie.get('release_date'),
+                    'vote_average': movie.get('vote_average'),
+                }
+                filtered_movies.append(movie_info)
+
+        return jsonify(filtered_movies)
+    else:
+        return jsonify([])  # Return an empty list if no results were found for the actor
+
+# Replace your existing '/api/movies/random' route code
 @app.route('/api/movies/random', methods=['GET'])
 def get_random_movie():
-    # Implement your logic to get a random movie
-    random_movie = {'title': 'Random Movie Title'}  # Replace with your random movie data
-    return jsonify(random_movie)
+    # Generate a random actor's name (for demonstration purposes)
+    random_actor_names = ['Tom Hanks', 'Brad Pitt', 'Meryl Streep', 'Leonardo DiCaprio']
+    random_actor_name = random.choice(random_actor_names)
 
-if __name__ == '__main__':
-    app.run(debug=True)
+    # Construct the API URL to fetch a random movie using the provided actor name
+    api_url = f'https://api.themoviedb.org/3/search/person?api_key={api_key}&query={random_actor_name}'
+
+    # Make a request to the API to get the actor's ID
+    actor_response = requests.get(api_url)
+    actor_data = actor_response.json()
+
+    if 'results' in actor_data and actor_data['results']:
+        actor_id = actor_data['results'][0]['id']
+
+        # Construct the API URL to fetch the actor's movie credits
+        movie_credits_url = f'https://api.themoviedb.org/3/person/{actor_id}/movie_credits?api_key={api_key}'
+
+        # Make a request to get the actor's movie credits
+        movie_credits_response = requests.get(movie_credits_url)
+        movie_data = movie_credits_response.json()
+
+        # Extract and format a random movie
+        movies = movie_data.get('cast', [])
+        if movies:
+            random_movie = random.choice(movies)
+            movie_info = {
+                'title': random_movie.get('title'),
+                'release_date': random_movie.get('release_date'),
+                'vote_average': random_movie.get('vote_average'),
+            }
+            return jsonify(movie_info)
+    
+    return jsonify({'title': 'Random Movie Title'})
+
+# Be sure to import 'requests' and 'random' at the top of your script
+import requests
+import random
