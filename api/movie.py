@@ -1,6 +1,5 @@
 from flask import Flask, request, jsonify
 import sqlite3
-import requests
 
 app = Flask(__name)
 
@@ -19,22 +18,10 @@ conn.commit()
 
 @app.route('/api/movies/filter', methods=['POST'])
 def filter_movies():
-    data = request.get_json()
-    lead_actor = data.get('leadActor')
-    genre = data.get('genre')
-    
-    # Use the provided API endpoint to fetch movie data
-    api_url = f'https://api.themoviedb.org/3/movie/550?api_key=bd74380ad0f3a6bc2db537543036493a'
-    response = requests.get(api_url)
-    
-    if response.status_code == 200:
-        movie_data = response.json()
-        # Implement your movie filtering logic here
-        # Return a list of filtered movies in JSON format
-        filtered_movies = [...]  # Replace with your filtered movie data
-        return jsonify(filtered_movies)
-    else:
-        return jsonify({'error': 'Failed to fetch movie data'})
+    # Implement your movie filtering logic here
+    # Return a list of filtered movies in JSON format
+    filtered_movies = [...]  # Replace with your filtered movie data
+    return jsonify(filtered_movies)
 
 @app.route('/api/movies/favorite', methods=['POST'])
 def favorite_movie():
@@ -56,15 +43,9 @@ def get_favorite_movies():
 
 @app.route('/api/movies/random', methods=['GET'])
 def get_random_movie():
-    # Use the provided API endpoint to fetch a random movie
-    api_url = 'https://api.themoviedb.org/3/movie/550?api_key=bd74380ad0f3a6bc2db537543036493a'
-    response = requests.get(api_url)
-    
-    if response.status_code == 200:
-        random_movie_data = response.json()
-        return jsonify(random_movie_data)
-    else:
-        return jsonify({'error': 'Failed to fetch random movie data'})
+    # Implement your logic to get a random movie
+    random_movie = {'title': 'Random Movie Title'}  # Replace with your random movie data
+    return jsonify(random_movie)
 
 if __name__ == '__main__':
     app.run(debug=True)
