@@ -1,61 +1,70 @@
 from flask import Flask, request, jsonify
-import requests
 import sqlite3
+import requests
 
 app = Flask(__name)
 
-# SQLite database setup
-conn = sqlite3.connect('favorites.db')
+# Initialize the SQLite database
+conn = sqlite3.connect('movies.db')
 cursor = conn.cursor()
-cursor.execute('''CREATE TABLE IF NOT EXISTS favorites (
-                  id INTEGER PRIMARY KEY AUTOINCREMENT,
-                  title TEXT,
-                  overview TEXT)''')
-conn.commit()
-conn.close()
 
-@app.route('/api/movies/search', methods=['POST'])
-def search_movies():
-    actor_query = request.json.get('actorQuery')
-    api_key = 'bd74380ad0f3a6bc2db537543036493a'
+# Create the movies table if it doesn't exist
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS movies (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT
+    )
+''')
+conn.commit()
+
+@app.route('/api/movies/filter', methods=['POST'])
+def filter_movies():
+    data = request.get_json()
+    lead_actor = data.get('leadActor')
+    genre = data.get('genre')
     
-    # Send a request to the TMDb API to fetch movies by actor
-    tmdb_api_url = f'https://api.themoviedb.org/3/search/person?api_key={api_key}&query={actor_query}'
-    response = requests.get(tmdb_api_url)
-    data = response.json()
+    # Use the provided API endpoint to fetch movie data
+    api_url = f'https://api.themoviedb.org/3/movie/550?api_key=bd74380ad0f3a6bc2db537543036493a'
+    response = requests.get(api_url)
     
-    # Extract movie data from the response
-    movies = []
-    for person in data['results']:
-        for known_for in person.get('known_for', []):
-            if known_for['media_type'] == 'movie':
-                movies.append(known_for)
-    
-    return jsonify(movies)
+    if response.status_code == 200:
+        movie_data = response.json()
+        # Implement your movie filtering logic here
+        # Return a list of filtered movies in JSON format
+        filtered_movies = [...]  # Replace with your filtered movie data
+        return jsonify(filtered_movies)
+    else:
+        return jsonify({'error': 'Failed to fetch movie data'})
 
 @app.route('/api/movies/favorite', methods=['POST'])
 def favorite_movie():
-    movie_data = request.json
-    
-    # Insert the movie into the SQLite database
-    conn = sqlite3.connect('favorites.db')
-    cursor = conn.cursor()
-    cursor.execute('INSERT INTO favorites (title, overview) VALUES (?, ?)', (movie_data['title'], movie_data['overview']))
+    data = request.get_json()
+    title = data.get('title')
+
+    # Store the favorited movie in the database
+    cursor.execute('INSERT INTO movies (title) VALUES (?)', (title,))
     conn.commit()
-    conn.close()
-    
-    return jsonify({"message": "Movie added to favorites"})
+
+    return jsonify({'message': 'Movie favorited successfully'})
 
 @app.route('/api/movies/favorites', methods=['GET'])
 def get_favorite_movies():
-    # Fetch and return the user's favorite movies from the database
-    conn = sqlite3.connect('favorites.db')
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM favorites')
-    favorites = [{'id': row[0], 'title': row[1], 'overview': row[2]} for row in cursor.fetchall()]
-    conn.close()
-    
+    # Retrieve the list of favorited movies from the database
+    cursor.execute('SELECT title FROM movies')
+    favorites = [row[0] for row in cursor.fetchall()]
     return jsonify(favorites)
+
+@app.route('/api/movies/random', methods=['GET'])
+def get_random_movie():
+    # Use the provided API endpoint to fetch a random movie
+    api_url = 'https://api.themoviedb.org/3/movie/550?api_key=bd74380ad0f3a6bc2db537543036493a'
+    response = requests.get(api_url)
+    
+    if response.status_code == 200:
+        random_movie_data = response.json()
+        return jsonify(random_movie_data)
+    else:
+        return jsonify({'error': 'Failed to fetch random movie data'})
 
 if __name__ == '__main__':
     app.run(debug=True)
