@@ -1,9 +1,8 @@
-from ctypes import _NamedFuncPointer
 from flask import Flask, request, jsonify
 import requests
 import sqlite3
 
-app = Flask(_NamedFuncPointer)
+app = Flask(__name)
 
 # SQLite database setup
 conn = sqlite3.connect('favorites.db')
@@ -17,14 +16,22 @@ conn.close()
 
 @app.route('/api/movies/search', methods=['POST'])
 def search_movies():
-    search_query = request.json.get('searchQuery')
+    actor_query = request.json.get('actorQuery')
     api_key = 'bd74380ad0f3a6bc2db537543036493a'
     
-    # Send a request to the TMDb API to fetch search results
-    tmdb_api_url = f'https://api.themoviedb.org/3/search/movie?api_key={api_key}&query={search_query}'
+    # Send a request to the TMDb API to fetch movies by actor
+    tmdb_api_url = f'https://api.themoviedb.org/3/search/person?api_key={api_key}&query={actor_query}'
     response = requests.get(tmdb_api_url)
     data = response.json()
-    return jsonify(data['results'])
+    
+    # Extract movie data from the response
+    movies = []
+    for person in data['results']:
+        for known_for in person.get('known_for', []):
+            if known_for['media_type'] == 'movie':
+                movies.append(known_for)
+    
+    return jsonify(movies)
 
 @app.route('/api/movies/favorite', methods=['POST'])
 def favorite_movie():
