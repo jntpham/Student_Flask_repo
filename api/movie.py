@@ -1,37 +1,37 @@
-from flask import Flask, jsonify, request
+from flask_cors import CORS
+from flask import Flask, request, jsonify
 import sqlite3
 
 app = Flask(__name__)
 
-DATABASE = './api/movies.db'
+DATABASE = 'movies.db'
 
-def get_db():
-    db = sqlite3.connect(DATABASE)
-    return db
 
-@app.route('/favorites', methods=['GET', 'POST'])
-def favorites():
-    if request.method == 'GET':
-        conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM favorites")
-        movies = cursor.fetchall()
-        conn.close()
-        return jsonify(movies), 200
+@app.route('/favorites', methods=['POST'])
+def add_favorite():
+    movie_data = request.get_json()
+    title = movie_data.get('title')
+    release_date = movie_data.get('release_date')
+    rating = movie_data.get('rating')
 
-    elif request.method == 'POST':
-        data = request.get_json()
-        title = data['title']
-        release_date = data['release_date']
-        rating = data['rating']
-
-        conn = get_db()
+    with sqlite3.connect(DATABASE) as conn:
         cursor = conn.cursor()
         cursor.execute("INSERT INTO favorites (title, release_date, rating) VALUES (?, ?, ?)", (title, release_date, rating))
         conn.commit()
-        conn.close()
 
-        return jsonify({"message": "Movie added to favorites"}), 201
+    return jsonify({"message": "Movie added to favorites successfully!"})
+
+
+@app.route('/favorites', methods=['GET'])
+def get_favorites():
+    with sqlite3.connect(DATABASE) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT title, release_date, rating FROM favorites")
+        movies = cursor.fetchall()
+
+    return jsonify(movies)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
+CORS(app)
