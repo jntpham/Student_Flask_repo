@@ -1,0 +1,32 @@
+import sqlite3
+
+def create_database():
+    conn = sqlite3.connect('spotify_artists.db')
+    cursor = conn.cursor()
+
+    # Create the Artists table
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS artists (
+        artist_id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        genre TEXT NOT NULL,
+        spotify_link TEXT,
+        image_url TEXT
+    )
+    ''')
+
+    # Create the Tracks table
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS tracks (
+        track_id TEXT PRIMARY KEY,
+        artist_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        spotify_link TEXT,
+        FOREIGN KEY (artist_id) REFERENCES artists (artist_id)
+    )
+    ''')
+
+    conn.commit()
+    conn.close()
+
+create_database()
