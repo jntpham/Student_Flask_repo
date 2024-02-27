@@ -1,0 +1,25 @@
+function favoriteShow(showId) {
+    const showCard = document.querySelector(`[data-show-id='${showId}']`).parentNode;
+    const name = showCard.querySelector("p a").textContent;
+    const image_url = showCard.querySelector("img").src;
+    // Assuming genre is available as a data attribute or similar
+    const genre = showCard.dataset.genre; 
+
+    fetch('/favorite', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            showId: showId,
+            name: name,
+            genre: genre,
+            image_url: image_url,
+        }),
+    })
+    .then(response => response.json())
+    .then(data => alert(data.message))
+    .catch((error) => {
+        console.error('Error:', error);
+    });
+}

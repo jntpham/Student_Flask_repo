@@ -1,0 +1,24 @@
+import sqlite3
+
+# Assuming the database file is in the 'api' directory relative to your script
+DATABASE = './api/shows.db'
+
+# Connect to SQLite database (it will be created if it doesn't exist)
+conn = sqlite3.connect(DATABASE)
+cursor = conn.cursor()
+
+# Create a new table for storing favorite shows
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS favorites (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    show_id TEXT NOT NULL UNIQUE,  # Unique identifier for the show from the API
+    name TEXT NOT NULL,
+    genre TEXT,
+    image_url TEXT,  # URL to the show's thumbnail image
+    UNIQUE(show_id)  # Ensure that each show is only favorited once
+)
+''')
+
+# Commit the changes and close the connection
+conn.commit()
+conn.close()
